@@ -17,6 +17,32 @@ This guide leans on a couple of projects I've built, because they're what I actu
 
 The Kubernetes parts are all stock kind, kubectl and Ollama, so if you'd rather use something else for either job, swap it in.
 
+### What your machine needs
+
+Everything runs in one kind node, and that node is a container on your machine, so the node's capacity is your laptop or desktop's. On every path, the model server asks Kubernetes for the same things:
+
+| Pod asks for | Amount |
+|---|---|
+| CPU | requests 4 cores, no limit |
+| Memory | requests 4 GiB, limited to 8 GiB |
+| Accelerator | nothing on CPU; one `gpu.intel.com/xe`, `nvidia.com/gpu` or `amd.com/gpu` on the GPU paths |
+| Model volume | a 20 Gi PVC (kind's local-path storage doesn't enforce the size; the model takes 1.9 GB) |
+
+And the accelerator and host setup each path needs:
+
+| Path | Accelerator | Host side |
+|---|---|---|
+| CPU only | none | nothing extra |
+| Intel Arc | Intel Arc / Xe graphics, integrated or discrete | `xe` kernel driver and `/dev/dri`. Older GPUs on `i915` advertise `gpu.intel.com/i915`, so change the resource name in the manifest |
+| NVIDIA | a GPU with CUDA compute capability 5.0 or newer ([Ollama's GPU list](https://docs.ollama.com/gpu)) | NVIDIA driver 550 or newer (`nvidia-smi` works) and the NVIDIA Container Toolkit configured for Docker |
+| AMD | a Radeon or Instinct GPU on [Ollama's ROCm list](https://docs.ollama.com/gpu) | `amdgpu` kernel driver, with `/dev/kfd` and `/dev/dri` present |
+
+- **CPU and RAM.** The node needs 4 free cores and 4 GiB to schedule the pod, which can then grow to 8 GiB. As a rule of thumb, 8 cores and 16 GB of RAM leaves room for your OS, Docker and the kind control plane as well; extra cores mainly speed up the CPU path. Both machines I tested on had plenty: the Framework 13 has 16 cores and 62 GB, and the Framework desktop has 32 threads and 62 GB of system RAM, with another 64 GB set aside for the GPU.
+- **GPU memory.** Integrated GPUs and APUs (the Arc B390, the Radeon 8060S) use system memory, and Ollama sees the GPU's pool rather than the pod's 8 GiB limit: 46.7 GiB on the laptop, 64 GiB on the desktop. `llama3.2:3b` used 1.9 GB of weights plus its KV cache, 3.1 GB in total on AMD with an 8192-token context. On a discrete card, 4 GB of VRAM should be enough for this model at that context (a rule of thumb, not something I measured on NVIDIA).
+- **Disk.** Measured after my runs: the kind node image is 1.34 GB, the node's own image store grew to 5.8 GB with `ollama/ollama:0.40.13` (Intel laptop) and 4.1 GB with `ollama/ollama:0.40.13-rocm` (AMD desktop), and the model is 1.9 GB. Budget about 10 GB free. The downloads are 3.39 GB for `ollama/ollama:0.40.13` (the CPU, Intel and NVIDIA image; it bundles CUDA), 1.45 GB for the `-rocm` image, 0.39 GB for `kindest/node:v1.37.0` and 2.02 GB for the model.
+- **OS and container runtime.** Linux with Docker; I used Docker 29.7.2 on Fedora 43 and 44. kind also supports Podman. The GPU paths pass `/dev/dri` (and `/dev/kfd` for AMD) from the host into the node, so they need a Linux host.
+- **Bigger models.** All of the above is sized for a 3B model. For anything bigger, ask llmfit (step 1) what fits your pod's limits, then raise the memory limit and disk to match.
+
 > **Pick your hardware once** and every hardware-specific step on this page switches to match. On GitHub you'll just see all four versions one after another.
 
 **Tested on:** Framework 13 (Intel Core Ultra X7 358H, 16 cores, 62 GB RAM, Intel Arc B390), Fedora 44, kernel 7.1.13, Docker 29.7.2, kind v0.33.0, Kubernetes v1.37.0 (`kindest/node:v1.37.0`), Ollama 0.40.13, model `llama3.2:3b` (Q4_K_M). The AMD path was run on a Framework desktop (Ryzen AI Max+ 395, Radeon 8060S, gfx1151), Fedora 43, kernel 7.1.8, same kind, node image and Ollama versions.
@@ -34,7 +60,7 @@ The Kubernetes parts are all stock kind, kubectl and Ollama, so if you'd rather 
 - **[llmfit](https://github.com/AlexsJones/llmfit) v1.1.18**, to pick a model that will actually fit your hardware. (Yes, I wrote it.)
 - **[k8sgpt](https://github.com/k8sgpt-ai/k8sgpt)**, for the last step, when your model debugs your cluster. (I created and maintain that one too.)
 - **k9s**, optional, but it's the nicest way to watch a cluster.
-- About **10 GB of free disk** and a decent connection. The Ollama image is 3.4 GB and the model is 2 GB.
+- About **10 GB of free disk** and a decent connection (see [what your machine needs](#what-your-machine-needs) for the breakdown).
 
 I keep everything in one directory, binaries included, so nothing touches my main kubeconfig or system:
 
