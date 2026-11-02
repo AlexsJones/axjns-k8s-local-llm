@@ -20,37 +20,6 @@
 <blockquote>
 <p><strong>Pick your hardware once</strong> below and every hardware-specific step on this page switches to match. Your choice is remembered.</p>
 </blockquote>
-<table>
-<thead>
-<tr>
-<th>Path</th>
-<th>Status</th>
-<th>Where it was run</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>CPU only</td>
-<td><strong>tested</strong></td>
-<td>Framework 13 laptop, Fedora 44</td>
-</tr>
-<tr>
-<td>Intel Arc (iGPU)</td>
-<td><strong>tested</strong></td>
-<td>Framework 13 laptop, Arc B390 (Panther Lake), Fedora 44</td>
-</tr>
-<tr>
-<td>NVIDIA</td>
-<td><strong>best effort, not tested on real hardware</strong></td>
-<td>manifests validated with <code>kubectl apply --dry-run=server</code> only</td>
-</tr>
-<tr>
-<td>AMD (ROCm)</td>
-<td><strong>tested</strong></td>
-<td>Framework desktop, Ryzen AI Max+ 395 / Radeon 8060S (gfx1151), Fedora 43</td>
-</tr>
-</tbody>
-</table>
 <p><strong>Tested on:</strong> Framework 13 (Intel Core Ultra X7 358H, 16 cores, 62 GB RAM, Intel Arc B390), Fedora 44, kernel 7.1.13, Docker 29.7.2, kind v0.33.0, Kubernetes v1.37.0 (<code>kindest/node:v1.37.0</code>), Ollama 0.40.13, model <code>llama3.2:3b</code> (Q4_K_M). The AMD path was run on a Framework desktop (Ryzen AI Max+ 395, Radeon 8060S, gfx1151), Fedora 43, kernel 7.1.8, same kind, node image and Ollama versions.</p>
 <p><strong>Versions verified on 2 November 2026.</strong> See the <a href="#versions">version table</a> at the end.</p>
 <div class="hw-picker" role="tablist" aria-label="Your hardware">
