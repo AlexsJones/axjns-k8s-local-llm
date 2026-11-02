@@ -8,6 +8,15 @@ If you ran Kubernetes for a living a few years back and you're coming back to it
 
 Every "run an LLM on Kubernetes" tutorial I found either used a toy model on CPU or assumed a cloud account with a rack of H100s. This one runs on the laptop or desktop you already have. Everything below was run for real, and the output you see is what came back.
 
+### Full disclosure: some of these tools are mine
+
+This guide leans on a couple of projects I've built, because they're what I actually reach for when I set this up:
+
+- **[llmfit](https://github.com/AlexsJones/llmfit)** works out which model will fit your hardware before you download anything. That's step 1.
+- **[k8sgpt](https://github.com/k8sgpt-ai/k8sgpt)** is a CNCF Sandbox project that I created and still maintain. It's the payoff at the end: it uses the model you've just served to diagnose problems in your own cluster.
+
+The Kubernetes parts are all stock kind, kubectl and Ollama, so if you'd rather use something else for either job, swap it in.
+
 > **Pick your hardware once** and every hardware-specific step on this page switches to match. On GitHub you'll just see all four versions one after another.
 
 | Path | Status | Where it was run |
@@ -30,7 +39,7 @@ Every "run an LLM on Kubernetes" tutorial I found either used a toy model on CPU
 - **Docker** (or Podman). kind runs each Kubernetes node as a container.
 - **kind v0.33.0**, **kubectl v1.37.x** and **helm**. kubectl only supports one minor version either side of the server, so an older 1.35 kubectl will misbehave against these 1.37 clusters; `kubectl version` should show a 1.36, 1.37 or 1.38 client. kind v0.33.0 is the newest release, and `kindest/node:v1.37.0` is the newest kind node image as of November 2026 (upstream Kubernetes is at 1.37.2; kind hasn't published a newer image yet).
 - **[llmfit](https://github.com/AlexsJones/llmfit) v1.1.18**, to pick a model that will actually fit your hardware. (Yes, I wrote it.)
-- **k8sgpt**, for when it breaks. (I wrote that too.)
+- **[k8sgpt](https://github.com/k8sgpt-ai/k8sgpt)**, for the last step, when your model debugs your cluster. (I created and maintain that one too.)
 - **k9s**, optional, but it's the nicest way to watch a cluster.
 - About **10 GB of free disk** and a decent connection. The Ollama image is 3.4 GB and the model is 2 GB.
 
@@ -680,7 +689,9 @@ No numbers for this path yet. When you run it, check the `offloaded N/N layers t
 
 ---
 
-## Step 5: break it, then debug it with k8sgpt
+## Step 5: the payoff, your model debugs your cluster with k8sgpt
+
+This is what the rest of the guide has been building towards. You've got a model serving inside your cluster; now you put it to work on that cluster. First you'll see what k8sgpt finds on its own, then you'll hand its findings to the model you just deployed and let it explain them.
 
 Every cluster breaks. The useful skill is getting from "it's not working" to the reason quickly. Let's break it on purpose with a typo in the image tag, which is about the most common thing that goes wrong:
 
@@ -755,7 +766,7 @@ No problems detected
 
 ### Now let the model you just deployed explain the next one
 
-This is my favourite bit. k8sgpt can send its findings to an LLM for an explanation, and you now have an LLM. Break something else, the classic first-day-with-gated-models mistake of referencing a Hugging Face token secret you never created (`manifests/break/missing-secret.yaml`):
+This is the bit everything else was for. k8sgpt can send its findings to an LLM for an explanation, and you now have an LLM. Break something else, the classic first-day-with-gated-models mistake of referencing a Hugging Face token secret you never created (`manifests/break/missing-secret.yaml`):
 
 ```bash
 kubectl apply -f manifests/break/missing-secret.yaml
@@ -780,6 +791,7 @@ You've now got the shape of it: a model server, a GPU exposed through a device p
 - **KServe.** A proper serving layer: model CRDs, autoscaling, canaries. [kserve.github.io](https://kserve.github.io/website/).
 - **llm-d.** Distributed inference on Kubernetes, built on vLLM and the inference gateway. It hit 1.0 in October: [llm-d.ai](https://llm-d.ai/).
 - **Kueue.** Queueing and quotas for when several people or jobs want the same GPUs: [kueue.sigs.k8s.io](https://kueue.sigs.k8s.io/).
+- **Sympozium.** Once you've got a model serving, the next thing you'll probably want is agents that use it. [Sympozium](https://github.com/sympozium-ai/sympozium) is another of my projects: a Kubernetes-native control plane for running and coordinating multi-agent systems, with agents in isolated workloads and policy as CRDs. It can point agents at an Ollama endpoint like the one you just built. It's early and under active development, so expect things to change.
 
 ---
 
