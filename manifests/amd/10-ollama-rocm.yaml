@@ -37,7 +37,11 @@ spec:
           args:
             - |
               ollama serve >/tmp/serve.log 2>&1 &
-              until ollama list >/dev/null 2>&1; do sleep 1; done
+              i=0
+              until ollama list >/dev/null 2>&1; do
+                i=$((i+1)); [ "$i" -ge 60 ] && { echo "ollama serve didn't start:"; cat /tmp/serve.log; exit 1; }
+                sleep 1
+              done
               ollama pull "$MODEL"
           env:
             - name: MODEL
@@ -64,7 +68,7 @@ spec:
               memory: 4Gi
             limits:
               memory: 8Gi
-              amd.com/gpu: 1
+              amd.com/gpu: 1   # extended resources only need a limit; the request is set to match
           readinessProbe:
             httpGet:
               path: /api/tags

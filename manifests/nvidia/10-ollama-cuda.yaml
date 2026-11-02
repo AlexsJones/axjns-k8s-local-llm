@@ -1,4 +1,4 @@
-# Ollama on an NVIDIA GPU (CUDA). BEST EFFORT, NOT TESTED ON REAL HARDWARE. The model is pulled once by an init container into a
+# Ollama on an NVIDIA GPU (CUDA, nvidia.com/gpu from NVIDIA's device plugin). The model is pulled once by an init container into a
 # PersistentVolumeClaim, so restarts don't re-download 2GB.
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -30,7 +30,7 @@ spec:
       labels:
         app: ollama
     spec:
-      runtimeClassName: nvidia   # created by the GPU Operator / nvkind setup
+      runtimeClassName: nvidia   # nvkind registers this RuntimeClass (so does the GPU Operator)
       initContainers:
         - name: pull-model
           image: ollama/ollama:0.40.13
@@ -38,7 +38,11 @@ spec:
           args:
             - |
               ollama serve >/tmp/serve.log 2>&1 &
-              until ollama list >/dev/null 2>&1; do sleep 1; done
+              i=0
+              until ollama list >/dev/null 2>&1; do
+                i=$((i+1)); [ "$i" -ge 60 ] && { echo "ollama serve didn't start:"; cat /tmp/serve.log; exit 1; }
+                sleep 1
+              done
               ollama pull "$MODEL"
           env:
             - name: MODEL
@@ -57,13 +61,15 @@ spec:
               value: "24h"          # keep the model in memory between requests
             - name: OLLAMA_NUM_PARALLEL
               value: "1"
+            - name: OLLAMA_CONTEXT_LENGTH
+              value: "8192"         # fixed context, so the KV cache stays small
           resources:
             requests:
               cpu: "4"
               memory: 4Gi
             limits:
               memory: 8Gi
-              nvidia.com/gpu: 1
+              nvidia.com/gpu: 1   # extended resources only need a limit; the request is set to match
           readinessProbe:
             httpGet:
               path: /api/tags
