@@ -1,0 +1,19 @@
+$ kubectl get node local-llm-control-plane -o jsonpath="{.status.allocatable}"
+{"cpu":"16","ephemeral-storage":"1997604388864","gpu.intel.com/xe":"1","hugepages-1Gi":"0","hugepages-2Mi":"0","memory":"65296284Ki","pods":"110"}
+$ kubectl logs ds/intel-gpu-plugin | tail -5
+$ kubectl apply -f manifests/intel/
+namespace/llm unchanged
+persistentvolumeclaim/ollama-models unchanged
+deployment.apps/ollama configured
+service/ollama unchanged
+$ kubectl -n llm rollout status deploy/ollama
+Waiting for deployment "ollama" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "ollama" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "ollama" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "ollama" rollout to finish: 0 of 1 updated replicas are available...
+deployment "ollama" successfully rolled out
+$ kubectl -n llm logs deploy/ollama | grep "inference compute"
+time=2026-11-02T11:51:08.625Z level=INFO source=routes.go:2474 msg="server config" env="map[CUDA_VISIBLE_DEVICES: GGML_VK_VISIBLE_DEVICES: GPU_DEVICE_ORDINAL: HIP_VISIBLE_DEVICES: HSA_OVERRIDE_GFX_VERSION: HTTPS_PROXY: HTTP_PROXY: LLAMA_ARG_FIT: LLAMA_ARG_FIT_TARGET: NO_PROXY: OLLAMA_CONTEXT_LENGTH:0 OLLAMA_CREATE_REMOTE:false OLLAMA_DEBUG:INFO OLLAMA_DEBUG_LOG_REQUESTS:false OLLAMA_EDITOR: OLLAMA_FLASH_ATTENTION:false OLLAMA_GO_TEMPLATE:true OLLAMA_GPU_OVERHEAD:0 OLLAMA_HOST:http://0.0.0.0:11434 OLLAMA_IGPU_ENABLE: OLLAMA_KEEP_ALIVE:24h0m0s OLLAMA_KV_CACHE_TYPE: OLLAMA_LLM_LIBRARY: OLLAMA_LOAD_TIMEOUT:5m0s OLLAMA_MAX_LOADED_MODELS:0 OLLAMA_MAX_QUEUE:512 OLLAMA_MAX_TRANSFER_STREAMS:4 OLLAMA_MODELS:/root/.ollama/models OLLAMA_NOHISTORY:false OLLAMA_NOPRUNE:false OLLAMA_NO_CLOUD:false OLLAMA_NUM_PARALLEL:1 OLLAMA_ORIGINS:[http://localhost https://localhost http://localhost:* https://localhost:* http://127.0.0.1 https://127.0.0.1 http://127.0.0.1:* https://127.0.0.1:* http://0.0.0.0 https://0.0.0.0 http://0.0.0.0:* https://0.0.0.0:* app://* file://* tauri://* vscode-webview://* vscode-file://*] OLLAMA_REMOTES:[ollama.com] OLLAMA_SCHED_SPREAD:false OLLAMA_VULKAN:true ROCR_VISIBLE_DEVICES: http_proxy: https_proxy: no_proxy:]"
+time=2026-11-02T11:51:08.630Z level=INFO source=runner.go:60 msg="discovering available GPUs..."
+time=2026-11-02T11:51:09.106Z level=INFO source=runner.go:405 msg="dropping integrated GPU; to enable, set OLLAMA_IGPU_ENABLE=1" id=0 library=Vulkan compute=0.0 name=Vulkan0 description="Intel(R) Graphics (PTL)" pci_id=0000:00:02.0
+time=2026-11-02T11:51:09.106Z level=INFO source=types.go:50 msg="inference compute" id=cpu library=cpu compute="" name=cpu description=cpu libdirs=ollama driver="" pci_id="" type="" total="8.0 GiB" available="8.0 GiB"

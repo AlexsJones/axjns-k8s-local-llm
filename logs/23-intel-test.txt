@@ -1,0 +1,16 @@
+$ time curl -s localhost:8081/v1/chat/completions -H "Content-Type: application/json" -d '{...same body...}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["choices"][0]["message"]["content"])'
+real 16.51s (first call, includes loading the model)
+Running a model on Kubernetes at home can enable efficient, scalable, and flexible testing and deployment of machine learning models, as well as provide a secure and isolated environment that can be easily replicated and shared, without the need for expensive cloud computing resources.
+$ ./bench.sh http://localhost:8081
+run 1: prompt 38 tok @ 44.9 tok/s, generated 181 tok @ 21.0 tok/s
+run 2: prompt 38 tok @ 579.2 tok/s, generated 182 tok @ 21.1 tok/s
+run 3: prompt 38 tok @ 564.0 tok/s, generated 182 tok @ 21.1 tok/s
+$ curl -s localhost:8081/api/ps
+{"models":[{"name":"llama3.2:3b","model":"llama3.2:3b","size":5987767418,"digest":"a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"3.2B","quantization_level":"Q4_K_M"},"expires_at":"2026-11-03T11:52:30.392836655Z","size_vram":5987767418,"context_length":32768,"runner":"llamacpp"}]}
+$ kubectl -n llm logs deploy/ollama | grep -E "offload|Vulkan0"
+llama_prepare_model_devices: using device Vulkan0 (Intel(R) Graphics (PTL)) (0000:00:02.0) - 42737 MiB free
+load_tensors: offloading output layer to GPU
+load_tensors: offloading 27 repeating layers to GPU
+load_tensors: offloaded 29/29 layers to GPU
+load_tensors:      Vulkan0 model buffer size =  1918.35 MiB
+llama_kv_cache:    Vulkan0 KV buffer size =  3584.00 MiB

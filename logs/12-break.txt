@@ -1,0 +1,5 @@
+$ kubectl -n llm set image deploy/ollama ollama=ollama/ollama:0.40.31
+deployment.apps/ollama image updated
+$ kubectl -n llm get pods
+NAME                      READY   STATUS             RESTARTS   AGE
+ollama-685b446ccd-s7p2z   0/1     ImagePullBackOff   0          45s

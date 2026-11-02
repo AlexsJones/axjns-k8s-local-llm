@@ -1,0 +1,26 @@
+$ kind version
+kind v0.33.0 go1.26.7 linux/amd64
+$ kind create cluster --config kind-local-llm-amd.yaml --kubeconfig ./kubeconfig
+Creating cluster "local-llm" ...
+ • Ensuring node image (kindest/node:v1.37.0) 🖼️  ...
+ ✓ Ensuring node image (kindest/node:v1.37.0) 🖼️
+ • Preparing nodes 📦   ...
+ ✓ Preparing nodes 📦 
+ • Writing configuration 📜  ...
+ ✓ Writing configuration 📜
+ • Starting control-plane 🕹️  ...
+ ✓ Starting control-plane 🕹️
+ • Installing CNI 🔌  ...
+ ✓ Installing CNI 🔌
+ • Installing StorageClass 💾  ...
+ ✓ Installing StorageClass 💾
+Set kubectl context to "kind-local-llm"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-local-llm --kubeconfig ./kubeconfig
+
+Have a nice day! 👋
+real 10.37s
+$ kubectl get nodes -o wide
+NAME                      STATUS     ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                       KERNEL-VERSION                  CONTAINER-RUNTIME
+local-llm-control-plane   NotReady   control-plane   4s    v1.37.0   172.18.0.2    <none>        Debian GNU/Linux 13 (trixie)   7.1.8-100.fc43.x86_64 (amd64)   containerd://2.3.4

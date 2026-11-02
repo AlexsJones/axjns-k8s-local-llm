@@ -1,0 +1,28 @@
+$ kubectl -n llm get pods -o wide
+NAME                     READY   STATUS    RESTARTS   AGE   IP           NODE                      NOMINATED NODE   READINESS GATES
+ollama-55bb55489-8k472   1/1     Running   0          16m   10.244.0.7   local-llm-control-plane   <none>           <none>
+$ kubectl -n llm logs deploy/ollama | grep -iE "rocm|gfx|inference compute|amdgpu|vram"
+Defaulted container "ollama" out of: ollama, pull-model (init)
+time=2026-11-02T11:29:20.038Z level=INFO source=routes.go:2474 msg="server config" env="map[CUDA_VISIBLE_DEVICES: GGML_VK_VISIBLE_DEVICES: GPU_DEVICE_ORDINAL: HIP_VISIBLE_DEVICES: HSA_OVERRIDE_GFX_VERSION: HTTPS_PROXY: HTTP_PROXY: LLAMA_ARG_FIT: LLAMA_ARG_FIT_TARGET: NO_PROXY: OLLAMA_CONTEXT_LENGTH:0 OLLAMA_CREATE_REMOTE:false OLLAMA_DEBUG:INFO OLLAMA_DEBUG_LOG_REQUESTS:false OLLAMA_EDITOR: OLLAMA_FLASH_ATTENTION:false OLLAMA_GO_TEMPLATE:true OLLAMA_GPU_OVERHEAD:0 OLLAMA_HOST:http://0.0.0.0:11434 OLLAMA_IGPU_ENABLE: OLLAMA_KEEP_ALIVE:24h0m0s OLLAMA_KV_CACHE_TYPE: OLLAMA_LLM_LIBRARY: OLLAMA_LOAD_TIMEOUT:5m0s OLLAMA_MAX_LOADED_MODELS:0 OLLAMA_MAX_QUEUE:512 OLLAMA_MAX_TRANSFER_STREAMS:4 OLLAMA_MODELS:/root/.ollama/models OLLAMA_NOHISTORY:false OLLAMA_NOPRUNE:false OLLAMA_NO_CLOUD:false OLLAMA_NUM_PARALLEL:1 OLLAMA_ORIGINS:[http://localhost https://localhost http://localhost:* https://localhost:* http://127.0.0.1 https://127.0.0.1 http://127.0.0.1:* https://127.0.0.1:* http://0.0.0.0 https://0.0.0.0 http://0.0.0.0:* https://0.0.0.0:* app://* file://* tauri://* vscode-webview://* vscode-file://*] OLLAMA_REMOTES:[ollama.com] OLLAMA_SCHED_SPREAD:false OLLAMA_VULKAN:true ROCR_VISIBLE_DEVICES: http_proxy: https_proxy: no_proxy:]"
+time=2026-11-02T11:29:20.537Z level=INFO source=types.go:32 msg="inference compute" id=0 filter_id=0 library=ROCm compute=gfx1151 name=ROCm0 description="Radeon 8060S Graphics" libdirs=ollama,rocm_v7_2 driver=0.0 pci_id=0000:c3:00.0 type=iGPU total="64.0 GiB" available="63.8 GiB"
+time=2026-11-02T11:29:20.537Z level=INFO source=routes.go:2586 msg="vram-based default context" total_vram="64.0 GiB" default_num_ctx=262144
+$ time curl -s localhost:8080/v1/chat/completions ...
+{"id":"chatcmpl-955","object":"chat.completion","created":1793618982,"model":"llama3.2:3b","system_fingerprint":"fp_ollama","choices":[{"index":0,"message":{"role":"assistant","content":"Running a model on Kubernetes at home allows for greater flexibility, scalability, and isolation, while also providing a cost-effective and efficient way to deploy and manage machine learning models for personal projects or hobbyist work."},"finish_reason":"stop"}],"usage":{"prompt_tokens":38,"prompt_tokens_details":{"cached_tokens":0},"completion_tokens":42,"total_tokens":80}}
+real 3.57s
+
+$ curl -s localhost:8080/api/ps
+{"models":[{"name":"llama3.2:3b","model":"llama3.2:3b","size":17253646990,"digest":"a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"3.2B","quantization_level":"Q4_K_M"},"expires_at":"2026-11-03T11:29:42.137092139Z","size_vram":17253646990,"context_length":131072,"runner":"llamacpp"}]}
+$ ./bench.sh
+run 1: prompt 38 tok @ 1810.2 tok/s, generated 177 tok @ 90.3 tok/s
+run 2: prompt 38 tok @ 3300.0 tok/s, generated 179 tok @ 91.0 tok/s
+run 3: prompt 38 tok @ 3280.4 tok/s, generated 179 tok @ 90.5 tok/s
+$ kubectl -n llm logs deploy/ollama | grep -iE "offload|layers|ROCm" | tail
+Defaulted container "ollama" out of: ollama, pull-model (init)
+llama_prepare_model_devices: using device ROCm0 (Radeon 8060S Graphics) (0000:c3:00.0) - 65234 MiB free
+load_tensors: offloading output layer to GPU
+load_tensors: offloading 27 repeating layers to GPU
+load_tensors: offloaded 29/29 layers to GPU
+load_tensors:        ROCm0 model buffer size =  1918.35 MiB
+llama_kv_cache:      ROCm0 KV buffer size = 14336.00 MiB
+llama_kv_cache: size = 14336.00 MiB (131072 cells,  28 layers,  1/1 seqs), K (f16): 7168.00 MiB, V (f16): 7168.00 MiB
+sched_reserve:      ROCm0 compute buffer size =   200.01 MiB

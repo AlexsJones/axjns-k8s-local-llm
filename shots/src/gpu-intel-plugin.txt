@@ -1,0 +1,12 @@
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin?ref=v0.37.1'
+daemonset.apps/intel-gpu-plugin created
+local-llm-control-plane   Ready    control-plane   86m   v1.37.0
+$ kubectl get node -o jsonpath="{.items[0].status.allocatable}"
+{"cpu":"16","ephemeral-storage":"1997604388864","gpu.intel.com/xe":"1","hugepages-1Gi":"0","hugepages-2Mi":"0","memory":"65296284Ki","pods":"110"}
+$ kubectl apply -f manifests/intel/
+namespace/llm unchanged
+persistentvolumeclaim/ollama-models unchanged
+deployment.apps/ollama configured
+service/ollama unchanged
+$ kubectl -n llm logs deploy/ollama | grep -E "inference compute|Vulkan"
+time=2026-11-02T11:51:27.174Z level=INFO source=types.go:32 msg="inference compute" id=0 filter_id=0 library=Vulkan compute=0.0 name=Vulkan0 description="Intel(R) Graphics (PTL)" libdirs=ollama,vulkan driver=0.0 pci_id=0000:00:02.0 type=iGPU total="46.7 GiB" available="41.8 GiB"

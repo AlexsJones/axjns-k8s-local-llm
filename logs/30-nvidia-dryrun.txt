@@ -1,0 +1,13 @@
+$ kubectl create namespace nvidia --dry-run=server
+namespace/nvidia
+$ helm template nvidia-device-plugin <chart 0.20.1> -n nvidia | kubectl apply --dry-run=server -f -
+clusterrole.rbac.authorization.k8s.io/nvidia-device-plugin-role created (server dry run)
+clusterrolebinding.rbac.authorization.k8s.io/nvidia-device-plugin-role-binding created (server dry run)
+Error from server (NotFound): error when creating "manifests/nvidia/nvidia-device-plugin-0.20.1.rendered.yaml": namespaces "nvidia" not found
+Error from server (NotFound): error when creating "manifests/nvidia/nvidia-device-plugin-0.20.1.rendered.yaml": namespaces "nvidia" not found
+Error from server (NotFound): error when creating "manifests/nvidia/nvidia-device-plugin-0.20.1.rendered.yaml": namespaces "nvidia" not found
+$ kubectl apply --dry-run=server -f manifests/nvidia/
+namespace/llm created (server dry run)
+persistentvolumeclaim/ollama-models created (server dry run)
+deployment.apps/ollama created (server dry run)
+service/ollama created (server dry run)

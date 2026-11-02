@@ -1,0 +1,25 @@
+$ rocminfo | grep -E "Marketing Name|Name: +gfx"
+  Marketing Name:          AMD RYZEN AI MAX+ 395 w/ Radeon 8060S
+  Name:                    gfx1151                            
+  Marketing Name:          AMD Radeon 8060S Graphics          
+  Marketing Name:          AIE-ML                             
+$ rocm-smi --showproductname --showmeminfo vram
+
+
+============================ ROCm System Management Interface ============================
+================================== Memory Usage (Bytes) ==================================
+GPU[0]		: VRAM Total Memory (B): 68719476736
+GPU[0]		: VRAM Total Used Memory (B): 8032382976
+==========================================================================================
+====================================== Product Info ======================================
+GPU[0]		: Card Series: 		N/A
+GPU[0]		: Card Model: 		0x1586
+GPU[0]		: Card Vendor: 		Advanced Micro Devices, Inc. [AMD/ATI]
+GPU[0]		: Card SKU: 		STRXLGEN
+GPU[0]		: Subsystem ID: 	0x000a
+GPU[0]		: Device Rev: 		0xc1
+GPU[0]		: Node ID: 		1
+GPU[0]		: GUID: 		14438
+GPU[0]		: GFX Version: 		gfx1151
+==========================================================================================
+================================== End of ROCm SMI Log ===================================

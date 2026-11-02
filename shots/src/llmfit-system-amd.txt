@@ -1,0 +1,12 @@
+$ llmfit --version
+llmfit 1.1.18
+$ llmfit system
+
+=== System Specifications ===
+CPU: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S (32 cores)
+Total RAM: 126.57 GB
+Available RAM: 30.11 GB
+RAM Bandwidth: ~145 GB/s (measured)
+Backend: ROCm
+GPU: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S (integrated) (unified memory, 126.57 GB shared, ROCm)
+

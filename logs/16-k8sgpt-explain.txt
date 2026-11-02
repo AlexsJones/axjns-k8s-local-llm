@@ -1,0 +1,24 @@
+$ kubectl apply -f manifests/break/missing-secret.yaml
+pod/model-downloader created
+$ kubectl -n llm get pods
+NAME                      READY   STATUS                       RESTARTS   AGE
+model-downloader          0/1     CreateContainerConfigError   0          16s
+ollama-555f9656c4-t8h24   1/1     Running                      0          37s
+$ k8sgpt auth add --backend ollama --model llama3.2:3b --baseurl http://localhost:8081
+ollama added to the AI backend provider list
+$ time k8sgpt analyze --kubeconfig ./kubeconfig --namespace llm --explain --backend ollama
+   0% |                                                | (0/1, 0 it/hr) [0s:0s]                                                                                100% |██████████████████████████████████████████████| (1/1, 2 it/min)
+AI Provider: ollama
+
+0: Pod llm/model-downloader()
+- Error: secret "hf-token" not found
+--- english --- 
+
+Error: Secret "hf-token" not found. This error occurs when the Kubernetes cluster cannot locate the secret with the specified name.
+
+Solution: 
+1. Check if the secret exists in the cluster using `kubectl get secrets`.
+2. Verify if the secret is correctly named and spelled.
+3. Run `kubectl create secret` to recreate the secret if it does not exist.
+
+real 25.74s

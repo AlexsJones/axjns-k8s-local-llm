@@ -1,0 +1,9 @@
+$ kubectl -n llm get pods,svc,pvc
+NAME                          READY   STATUS    RESTARTS   AGE
+pod/ollama-555f9656c4-rrbkg   1/1     Running   0          16m
+
+NAME             TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+service/ollama   ClusterIP   10.96.231.199   <none>        80/TCP    16m
+
+NAME                                  STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+persistentvolumeclaim/ollama-models   Bound    pvc-f353ecaf-6860-4bb9-befc-78669359c084   20Gi       RWO            standard       <unset>                 16m

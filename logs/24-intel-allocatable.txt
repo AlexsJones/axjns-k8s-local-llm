@@ -1,0 +1,5 @@
+$ kubectl get nodes
+NAME                      STATUS   ROLES           AGE   VERSION
+local-llm-control-plane   Ready    control-plane   86m   v1.37.0
+$ kubectl get node -o jsonpath="{.items[0].status.allocatable}"
+{"cpu":"16","ephemeral-storage":"1997604388864","gpu.intel.com/xe":"1","hugepages-1Gi":"0","hugepages-2Mi":"0","memory":"65296284Ki","pods":"110"}

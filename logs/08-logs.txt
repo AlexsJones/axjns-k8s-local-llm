@@ -1,0 +1,6 @@
+$ kubectl -n llm logs deploy/ollama -c pull-model | tail -3
+verifying sha256 digest 
+writing manifest 
+success 
+$ kubectl -n llm logs deploy/ollama | grep "inference compute"
+time=2026-11-02T11:46:14.148Z level=INFO source=types.go:50 msg="inference compute" id=cpu library=cpu compute="" name=cpu description=cpu libdirs=ollama driver="" pci_id="" type="" total="8.0 GiB" available="8.0 GiB"

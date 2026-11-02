@@ -1,0 +1,28 @@
+$ llmfit fit -n 8 --providers meta,google,alibaba --sort score
+
+=== System Specifications ===
+CPU: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S (32 cores)
+Total RAM: 126.57 GB
+Available RAM: 30.81 GB
+RAM Bandwidth: ~129 GB/s (measured)
+Backend: ROCm
+GPU: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S (integrated) (unified memory, 126.57 GB shared, ROCm)
+
+(2939 models hidden — incompatible backend)
+
+=== Model Compatibility Analysis ===
+Found 8 compatible model(s)
+
+╭────────────┬──────────────────────────────────────────┬──────────┬──────┬───────┬────────────┬───────────┬──────┬─────────┬──────┬───────┬─────────┬─────────────╮
+│ Status     │ Model                                    │ Provider │ Size │ Score │ tok/s est. │ Quant     │ Conf │ Runtime │ Mode │ Mem % │ Context │ Added to HF │
+├────────────┼──────────────────────────────────────────┼──────────┼──────┼───────┼────────────┼───────────┼──────┼─────────┼──────┼───────┼─────────┼─────────────┤
+│ 🟢 Perfect │ Qwen/Qwen2.5-Coder-7B-Instruct-GPTQ-Int4 │ Alibaba  │ 7.6B │ 91    │ 37.0       │ GPTQ-Int4 │ est  │ vLLM    │ GPU  │ 3.7%  │ 32k     │ 2024-09-20  │
+│ 🟢 Perfect │ Qwen/CodeQwen1.5-7B-AWQ                  │ Alibaba  │ 7.3B │ 91    │ 38.8       │ AWQ-4bit  │ est  │ vLLM    │ GPU  │ 3.7%  │ 65k     │ 2024-04-21  │
+│ 🟢 Perfect │ Qwen/Qwen2.5-VL-7B-Instruct-AWQ          │ Alibaba  │ 8.3B │ 89    │ 34.0       │ AWQ-4bit  │ est  │ vLLM    │ GPU  │ 4.0%  │ 128k    │ 2025-02-15  │
+│ 🟢 Perfect │ Qwen/Qwen2.5-7B-Instruct-AWQ             │ Alibaba  │ 7.6B │ 89    │ 37.0       │ AWQ-4bit  │ est  │ vLLM    │ GPU  │ 3.7%  │ 32k     │ 2024-09-17  │
+│ 🟢 Perfect │ Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4       │ Alibaba  │ 7.6B │ 89    │ 37.0       │ GPTQ-Int4 │ est  │ vLLM    │ GPU  │ 3.7%  │ 32k     │ 2024-09-17  │
+│ 🟢 Perfect │ Qwen/Qwen2-VL-7B-Instruct-AWQ            │ Alibaba  │ 8.3B │ 88    │ 34.0       │ AWQ-4bit  │ est  │ vLLM    │ GPU  │ 4.0%  │ 32k     │ 2024-08-29  │
+│ 🟢 Perfect │ Qwen/Qwen2-VL-7B-Instruct-GPTQ-Int4      │ Alibaba  │ 8.3B │ 88    │ 34.0       │ GPTQ-Int4 │ est  │ vLLM    │ GPU  │ 4.0%  │ 32k     │ 2024-08-29  │
+│ 🟢 Perfect │ Qwen/Qwen2-7B-Instruct-AWQ               │ Alibaba  │ 7.6B │ 88    │ 37.0       │ AWQ-4bit  │ est  │ vLLM    │ GPU  │ 3.7%  │ 32k     │ 2024-06-06  │
+╰────────────┴──────────────────────────────────────────┴──────────┴──────┴───────┴────────────┴───────────┴──────┴─────────┴──────┴───────┴─────────┴─────────────╯
+  Note: tok/s values are baseline estimates; real runtime depends on engine/runtime.

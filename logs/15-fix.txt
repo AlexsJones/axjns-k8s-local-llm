@@ -1,0 +1,14 @@
+$ kubectl -n llm rollout undo deploy/ollama
+Warning: resource deployments/ollama was previously managed with 'kubectl apply'. Rolling back will not update the kubectl.kubernetes.io/last-applied-configuration annotation, which may cause unexpected behavior on future 'kubectl apply' operations. Consider using 'kubectl apply' with your previous configuration file instead.
+deployment.apps/ollama rolled back
+$ kubectl -n llm rollout status deploy/ollama
+Waiting for deployment "ollama" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "ollama" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "ollama" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "ollama" rollout to finish: 0 of 1 updated replicas are available...
+deployment "ollama" successfully rolled out
+$ k8sgpt analyze --kubeconfig ./kubeconfig --namespace llm
+AI Provider: AI not used; --explain not set
+
+No problems detected
+

@@ -1,0 +1,16 @@
+$ lspci | grep -iE "vga|display"
+c3:00.0 Display controller: Advanced Micro Devices, Inc. [AMD/ATI] Strix Halo [Radeon Graphics / Radeon 8050S Graphics / Radeon 8060S Graphics] (rev c1)
+$ ls -l /dev/kfd /dev/dri
+crw-rw-rw-. 1 root render 234, 0 Oct 11 12:47 /dev/kfd
+
+/dev/dri:
+total 0
+drwxr-xr-x. 2 root root         80 Oct 11 12:47 by-path
+crw-rw----+ 1 root video  226,   1 Oct 11 13:14 card1
+crw-rw-rw-. 1 root render 226, 128 Oct 11 12:47 renderD128
+$ command -v rocm-smi
+/usr/bin/rocm-smi
+$ command -v rocminfo
+/usr/bin/rocminfo
+$ command -v amd-smi
+amd-smi: not installed

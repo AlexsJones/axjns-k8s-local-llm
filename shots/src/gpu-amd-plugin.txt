@@ -1,0 +1,8 @@
+$ kubectl get nodes
+NAME                      STATUS   ROLES           AGE   VERSION
+local-llm-control-plane   Ready    control-plane   89m   v1.37.0
+$ kubectl -n kube-system get ds amdgpu-device-plugin-daemonset
+NAME                             DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR              AGE
+amdgpu-device-plugin-daemonset   1         1         1       1            1           kubernetes.io/arch=amd64   88m
+$ kubectl get node -o jsonpath="{.items[0].status.allocatable}"
+{"amd.com/gpu":"1","cpu":"32","ephemeral-storage":"4094003511296","hugepages-1Gi":"0","hugepages-2Mi":"0","memory":"65605260Ki","pods":"110"}

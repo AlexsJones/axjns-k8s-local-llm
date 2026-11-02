@@ -1,0 +1,12 @@
+$ kubectl version
+Client Version: v1.37.2
+Kustomize Version: v5.8.1
+Server Version: v1.37.0
+$ kubectl apply -f manifests/amd/
+namespace/llm unchanged
+persistentvolumeclaim/ollama-models unchanged
+deployment.apps/ollama configured
+service/ollama unchanged
+daemonset.apps/amdgpu-device-plugin-daemonset unchanged
+$ kubectl -n llm rollout status deploy/ollama
+deployment "ollama" successfully rolled out

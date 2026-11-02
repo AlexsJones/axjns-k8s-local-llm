@@ -1,0 +1,5 @@
+$ kubectl apply --dry-run=server -f manifests/nvidia/
+namespace/llm created (server dry run)
+persistentvolumeclaim/ollama-models created (server dry run)
+deployment.apps/ollama created (server dry run)
+service/ollama created (server dry run)

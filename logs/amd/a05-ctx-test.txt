@@ -1,0 +1,15 @@
+$ curl -s localhost:8081/v1/chat/completions ... | jq -r .choices[0].message.content
+Running a model on Kubernetes at home allows for low-cost, flexible, and portable deployment of AI and machine learning workloads, enabling efficient testing, training, and deployment of models on small-scale hardware before scaling up to larger cluster environments.
+$ ./bench.sh http://localhost:8081
+run 1: prompt 38 tok @ 1800.3 tok/s, generated 177 tok @ 82.6 tok/s
+run 2: prompt 38 tok @ 3277.0 tok/s, generated 179 tok @ 85.2 tok/s
+run 3: prompt 38 tok @ 3087.2 tok/s, generated 179 tok @ 85.8 tok/s
+$ curl -s localhost:8081/api/ps | jq ".models[0] | {size_vram, context_length}"
+{
+  "size_vram": 3118863482,
+  "context_length": 8192
+}
+$ kubectl -n llm logs deploy/ollama | grep -E "inference compute|offloaded|KV buffer"
+time=2026-11-02T12:39:28.200Z level=INFO source=types.go:32 msg="inference compute" id=0 filter_id=0 library=ROCm compute=gfx1151 name=ROCm0 description="Radeon 8060S Graphics" libdirs=ollama,rocm_v7_2 driver=0.0 pci_id=0000:c3:00.0 type=iGPU total="64.0 GiB" available="63.8 GiB"
+load_tensors: offloaded 29/29 layers to GPU
+llama_kv_cache:      ROCm0 KV buffer size =   896.00 MiB

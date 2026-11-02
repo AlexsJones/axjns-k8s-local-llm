@@ -1,0 +1,12 @@
+$ llmfit --version
+llmfit 1.1.18
+$ llmfit system
+
+=== System Specifications ===
+CPU: Intel(R) Core(TM) Ultra X7 358H (16 cores)
+Total RAM: 62.27 GB
+Available RAM: 42.32 GB
+RAM Bandwidth: ~58 GB/s (measured)
+Backend: SYCL
+GPU: Intel Arc B390 (integrated) (unified memory, 62.27 GB shared, SYCL)
+

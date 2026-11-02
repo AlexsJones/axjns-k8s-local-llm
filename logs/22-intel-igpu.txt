@@ -1,0 +1,7 @@
+$ kubectl apply -f manifests/intel/
+namespace/llm unchanged
+persistentvolumeclaim/ollama-models unchanged
+deployment.apps/ollama configured
+service/ollama unchanged
+$ kubectl -n llm logs deploy/ollama | grep -E "inference compute|Vulkan"
+time=2026-11-02T11:51:27.174Z level=INFO source=types.go:32 msg="inference compute" id=0 filter_id=0 library=Vulkan compute=0.0 name=Vulkan0 description="Intel(R) Graphics (PTL)" libdirs=ollama,vulkan driver=0.0 pci_id=0000:00:02.0 type=iGPU total="46.7 GiB" available="41.8 GiB"

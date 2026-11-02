@@ -1,0 +1,31 @@
+$ kubectl -n llm port-forward svc/ollama 8081:80 &
+$ time curl -s localhost:8081/v1/chat/completions -H "Content-Type: application/json" -d '{"model":"llama3.2:3b","messages":[{"role":"user","content":"In one sentence, why run a model on Kubernetes at home?"}]}' | jq
+real 14.98s (first call, includes loading the model)
+{
+    "id": "chatcmpl-201",
+    "object": "chat.completion",
+    "created": 1793620013,
+    "model": "llama3.2:3b",
+    "system_fingerprint": "fp_ollama",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "Running a model on Kubernetes at home allows for flexible and efficient management of machine learning workflows, enabling easy scalability, data distribution, and model versioning, all within a familiar and accessible environment."
+            },
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 38,
+        "prompt_tokens_details": {
+            "cached_tokens": 0
+        },
+        "completion_tokens": 39,
+        "total_tokens": 77
+    }
+}
+{"id":"chatcmpl-553","object":"chat.completion","created":1793620019,"model":"llama3.2:3b","system_fingerprint":"fp_ollama","choices":[{"index":0,"message":{"role":"assistant","content":"Running a model on Kubernetes at home allows for greater control, flexibility, and scalability, making it an ideal setup for developers, researchers, and organizations that require precise management and performance of machine learning and AI applications."},"finish_reason":"stop"}],"usage":{"prompt_tokens":38,"prompt_tokens_details":{"cached_tokens":37},"completion_tokens":43,"total_tokens":81}}
+real 5.84s (second call, model warm)
+

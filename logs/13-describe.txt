@@ -1,0 +1,13 @@
+$ kubectl -n llm describe pod/ollama-685b446ccd-s7p2z | sed -n '/Events:/,$p'
+Events:
+  Type     Reason     Age               From               Message
+  ----     ------     ----              ----               -------
+  Normal   Scheduled  45s               default-scheduler  Successfully assigned llm/ollama-685b446ccd-s7p2z to local-llm-control-plane
+  Normal   Pulled     44s               kubelet            spec.initContainers{pull-model}: Container image "ollama/ollama:0.40.13" already present on machine and can be accessed by the pod
+  Normal   Created    44s               kubelet            spec.initContainers{pull-model}: Container created
+  Normal   Started    44s               kubelet            spec.initContainers{pull-model}: Container started
+  Normal   BackOff    15s               kubelet            spec.containers{ollama}: Back-off pulling image "ollama/ollama:0.40.31"
+  Warning  Failed     15s               kubelet            spec.containers{ollama}: Error: ImagePullBackOff
+  Normal   Pulling    3s (x3 over 42s)  kubelet            spec.containers{ollama}: Pulling image "ollama/ollama:0.40.31"
+  Warning  Failed     3s (x3 over 41s)  kubelet            spec.containers{ollama}: Failed to pull image "ollama/ollama:0.40.31": rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/ollama/ollama:0.40.31": failed to resolve reference "docker.io/ollama/ollama:0.40.31": docker.io/ollama/ollama:0.40.31: not found
+  Warning  Failed     3s (x3 over 41s)  kubelet            spec.containers{ollama}: Error: ErrImagePull

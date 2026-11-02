@@ -1,0 +1,46 @@
+$ llmfit --ram 8G --cpu-cores 4 info meta-llama/Llama-3.2-3B-Instruct
+
+=== meta-llama/Llama-3.2-3B-Instruct ===
+
+Provider: Meta
+Parameters: 3.2B
+Quantization: Q4_K_M
+Best Quant: Q8_0
+Context Length: 262144 tokens
+Use Case: Instruction following, chat
+Category: Chat
+Released: 2024-09-25
+License: llama3.2
+Runtime: llama.cpp (baseline est. ~24.9 tok/s)
+
+Score Breakdown:
+  Overall Score: 74.2 / 100
+  Quality: 69  Speed: 62  Fit: 100  Context: 100
+  Baseline Est. Speed: 24.9 tok/s
+
+Estimate Basis:
+  Confidence: estimated
+  Method: per-backend heuristic constant — GPU not in the bandwidth table,
+          so expect a wide error band. Please report your GPU model so we
+          can add real bandwidth data (github.com/AlexsJones/llmfit/issues).
+  Models single-request generation at ctx <= 8192 tokens.
+  Prompt processing (prefill/TTFT) is not estimated for this model/hardware.
+  Baseline error band is roughly +/-30%.
+  Verify on this machine:
+    llmfit bench "meta-llama/Llama-3.2-3B-Instruct"    (against a running provider)
+    llama-bench -m <path-to-Q8_0-gguf> -ngl 99 -p 512 -n 128    (compare the tg128 row; get the path via `llmfit download`)
+
+Resource Requirements:
+  Min VRAM: 1.6 GB
+  Min RAM: 1.8 GB (CPU inference)
+  Recommended RAM: 3.0 GB
+  Disk (est): 3.4 GB (at Q8_0)
+  Disk/quant: Q8_0: 3.4G  Q6_K: 2.6G  Q5_K_M: 2.2G  Q4_K_M: 1.9G  Q3_K_M: 1.5G  Q2_K: 1.2G
+
+Fit Analysis:
+  Status: 🟢 Perfect
+  Run Mode: GPU
+  Memory Utilization: 59.4% (4.7 / 8.0 GB)
+
+GGUF Downloads:
+  unsloth → https://huggingface.co/unsloth/Llama-3.2-3B-Instruct-GGUF

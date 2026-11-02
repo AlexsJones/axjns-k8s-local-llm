@@ -1,0 +1,14 @@
+# kind cluster for running a model locally.
+# One node is plenty. The extraMounts line is only needed for the GPU sections;
+# kind nodes are privileged containers so /dev/dri is visible anyway, but being
+# explicit makes it obvious what the node can see.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: local-llm
+nodes:
+  - role: control-plane
+    # newest kind node image as of Nov 2026 (kind v0.33.0). Upstream is at 1.37.2.
+    image: kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5
+    extraMounts:
+      - hostPath: /dev/dri
+        containerPath: /dev/dri

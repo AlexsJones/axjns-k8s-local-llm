@@ -1,0 +1,7 @@
+$ kubectl apply -f manifests/amd/amdgpu-device-plugin.yaml
+daemonset.apps/amdgpu-device-plugin-daemonset created
+$ kubectl apply -f manifests/amd/00-namespace.yaml -f manifests/amd/10-ollama-rocm.yaml
+namespace/llm created
+persistentvolumeclaim/ollama-models created
+deployment.apps/ollama created
+service/ollama created

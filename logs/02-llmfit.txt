@@ -1,0 +1,77 @@
+$ llmfit --version
+llmfit 1.1.18
+$ llmfit system
+
+=== System Specifications ===
+CPU: Intel(R) Core(TM) Ultra X7 358H (16 cores)
+Total RAM: 62.27 GB
+Available RAM: 46.27 GB
+RAM Bandwidth: ~58 GB/s (measured)
+Backend: SYCL
+GPU: Intel Arc B390 (integrated) (unified memory, 62.27 GB shared, SYCL)
+
+
+$ llmfit --ram 8G --cpu-cores 4 recommend -n 5 --use-case chat --min-fit good --csv
+name,provider,parameter_count,params_billion,context_length,fit_level,run_mode,score,score_quality,score_speed,score_fit,score_context,estimated_tps,memory_required_gb,memory_available_gb,utilization_pct,disk_size_gb,best_quant,runtime,use_case,release_date,license,is_moe,installed,runnable
+Tree-AI-lab/llama-3.2-1b-baoule-instruct-v3,tree-ai-lab,1.2B,1.24,4096,perfect,gpu,82.6,56.6,100.0,100.0,100.0,64.7,1.84,8.0,23.0,1.3,Q8_0,llama.cpp,Chat,2026-09-27,llama3.2,false,false,true
+sbussiso/Llama-3.2-1B-Instruct-abliterated,sbussiso,1.5B,1.5,4194304,perfect,gpu,82.6,56.6,100.0,100.0,100.0,53.4,2.32,8.0,29.0,1.57,Q8_0,llama.cpp,Chat,2026-10-04,llama3.2,false,false,true
+hyeonq3/Qwen3-1.7B-base-MED-ChatVector,hyeonq3,1.7B,1.72,4096,perfect,gpu,82.2,55.4,100.0,100.0,100.0,46.5,2.36,8.0,29.5,1.81,Q8_0,llama.cpp,Chat,,,false,false,true
+MohamedAhmedAE/Llama-3.2-1B-Instruct-Medical-Finetuned-merged,mohamedahmedae,1.2B,1.24,131072,perfect,gpu,82.0,55.1,100.0,100.0,100.0,64.7,2.05,8.0,25.6,1.3,Q8_0,llama.cpp,Chat,2026-06-09,llama3.2,false,false,true
+saidutta69/Llama-3.2-1B-Instruct-heretic,saidutta69,1.2B,1.24,262144,perfect,gpu,82.0,55.1,100.0,100.0,100.0,64.7,2.05,8.0,25.6,1.3,Q8_0,llama.cpp,Chat,2026-07-02,llama3.2,false,false,true
+
+$ llmfit --ram 8G --cpu-cores 4 info meta-llama/Llama-3.2-3B-Instruct
+
+=== meta-llama/Llama-3.2-3B-Instruct ===
+
+Provider: Meta
+Parameters: 3.2B
+Quantization: Q4_K_M
+Best Quant: Q8_0
+Context Length: 262144 tokens
+Use Case: Instruction following, chat
+Category: Chat
+Released: 2024-09-25
+License: llama3.2
+Runtime: llama.cpp (baseline est. ~24.9 tok/s)
+
+Score Breakdown:
+  Overall Score: 74.2 / 100
+  Quality: 69  Speed: 62  Fit: 100  Context: 100
+  Baseline Est. Speed: 24.9 tok/s
+
+Estimate Basis:
+  Confidence: estimated
+  Method: per-backend heuristic constant — GPU not in the bandwidth table,
+          so expect a wide error band. Please report your GPU model so we
+          can add real bandwidth data (github.com/AlexsJones/llmfit/issues).
+  Models single-request generation at ctx <= 8192 tokens.
+  Prompt processing (prefill/TTFT) is not estimated for this model/hardware.
+  Baseline error band is roughly +/-30%.
+  Verify on this machine:
+    llmfit bench "meta-llama/Llama-3.2-3B-Instruct"    (against a running provider)
+    llama-bench -m <path-to-Q8_0-gguf> -ngl 99 -p 512 -n 128    (compare the tg128 row; get the path via `llmfit download`)
+
+Resource Requirements:
+  Min VRAM: 1.6 GB
+  Min RAM: 1.8 GB (CPU inference)
+  Recommended RAM: 3.0 GB
+  Disk (est): 3.4 GB (at Q8_0)
+  Disk/quant: Q8_0: 3.4G  Q6_K: 2.6G  Q5_K_M: 2.2G  Q4_K_M: 1.9G  Q3_K_M: 1.5G  Q2_K: 1.2G
+
+Fit Analysis:
+  Status: 🟢 Perfect
+  Run Mode: GPU
+  Memory Utilization: 59.4% (4.7 / 8.0 GB)
+
+GGUF Downloads:
+  unsloth → https://huggingface.co/unsloth/Llama-3.2-3B-Instruct-GGUF
+  bartowski → https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF
+  mradermacher → https://huggingface.co/mradermacher/Llama-3.2-3B-Instruct-GGUF
+  Tip: llmfit download unsloth/Llama-3.2-3B-Instruct-GGUF --quant Q8_0
+
+Notes:
+  Context capped at 8192 tokens for estimation (model supports up to 262144; use --max-context to override)
+  Unified memory: GPU and CPU share the same pool
+  Best quantization for hardware: Q8_0 (model default: Q4_K_M)
+  Baseline estimated speed: 24.9 tok/s
+

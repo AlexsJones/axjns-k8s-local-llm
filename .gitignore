@@ -1,0 +1,12 @@
+# local binaries and cluster credentials: never commit
+bin/
+kubeconfig
+kubeconfig*
+*.kubeconfig
+# scratch / transfer artefacts
+*.tgz
+.amd/
+shots/trunc/
+logs/screens/
+__pycache__/
+.DS_Store

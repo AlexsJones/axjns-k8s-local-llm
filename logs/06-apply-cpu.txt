@@ -1,0 +1,5 @@
+$ kubectl apply -f manifests/cpu/
+namespace/llm created
+persistentvolumeclaim/ollama-models created
+deployment.apps/ollama created
+service/ollama created

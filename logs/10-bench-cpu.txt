@@ -1,0 +1,4 @@
+$ ./bench.sh
+run 1: prompt 38 tok @ 21.8 tok/s, generated 177 tok @ 7.3 tok/s
+run 2: prompt 38 tok @ 277.6 tok/s, generated 178 tok @ 7.3 tok/s
+run 3: prompt 38 tok @ 281.0 tok/s, generated 178 tok @ 7.3 tok/s
