@@ -1,8 +1,20 @@
 #!/usr/bin/env python3
 """Build site/index.html from README.md. Tab blocks in the markdown
 (<!-- tab:cpu intel --> ... <!-- /tab -->) become hardware-switchable divs."""
-import re, markdown, html, pathlib
+import re, markdown, html, pathlib, shutil
 src = pathlib.Path("README.md").read_text()
+# Screenshots live in img/ (what README.md references, so they render on GitHub).
+# Mirror them into site/img/: this page uses them, and axjns.dev fetches
+# raw .../main/site/img/<name>.png and vendors site/img/*.png.
+pathlib.Path("site/img").mkdir(parents=True, exist_ok=True)
+for old_png in pathlib.Path("site/img").glob("*.png"):
+    if not pathlib.Path("img", old_png.name).exists():
+        old_png.unlink()
+for png in sorted(pathlib.Path("img").glob("*.png")):
+    shutil.copy2(png, pathlib.Path("site/img", png.name))
+missing = [m for m in re.findall(r"\]\((img/[^)]+)\)", src) if not pathlib.Path(m).exists()]
+if missing:
+    raise SystemExit(f"README references missing images: {missing}")
 src = re.sub(r"<!-- tab:([a-z ]+) -->", lambda m: f'<div data-hw="{m.group(1)}" markdown="1">', src)
 src = src.replace("<!-- /tab -->", "</div>")
 picker = '''<div class="hw-picker" role="tablist" aria-label="Your hardware">

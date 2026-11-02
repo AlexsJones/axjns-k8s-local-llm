@@ -12,7 +12,7 @@ Thanks for helping make this guide better. The most useful contributions are rep
 ## Making a change
 
 1. Edit `README.md` (it is the source for the website page).
-2. If you add a screenshot, put the PNG in `site/img/` and reference it as `img/<name>.png`.
+2. If you add a screenshot, put the PNG in `img/` and reference it as `img/<name>.png`. `python3 build.py` copies it into `site/img/`, which axjns.dev reads from; commit both.
 3. Build the static page: `python3 build.py` (needs `pip install markdown`), then open `site/index.html`.
 4. Open a pull request using the template.
 
