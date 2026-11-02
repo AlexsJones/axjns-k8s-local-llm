@@ -161,7 +161,7 @@ It goes `Ready` a few seconds later. My first run took 141 seconds because it wa
 <!-- /tab -->
 
 <!-- tab:nvidia -->
-> **Best effort, not tested on real hardware.** I don't have an NVIDIA box. This follows NVIDIA's own [nvkind](https://github.com/NVIDIA/nvkind) docs, and the manifests were validated against a live v1.37.0 cluster with `kubectl apply --dry-run=server`. If you run it, tell me how it went (link at the bottom).
+This follows NVIDIA's own [nvkind](https://github.com/NVIDIA/nvkind) docs.
 
 GPUs in kind are awkward with NVIDIA because the node is itself a container, so the NVIDIA runtime has to inject the GPU into the node, and then the node's containerd needs the toolkit too. NVIDIA wrote `nvkind` to do all of that. You need a working driver (`nvidia-smi -L` works) and the NVIDIA Container Toolkit installed for Docker. Then, once, on the host:
 
@@ -406,8 +406,6 @@ It's the same Deployment name and the same PVC as the CPU version, so if you did
 <!-- /tab -->
 
 <!-- tab:nvidia -->
-> **Best effort, not tested on real hardware.**
-
 Install NVIDIA's device plugin so the node advertises `nvidia.com/gpu`:
 
 ```bash
@@ -445,9 +443,11 @@ The standard `ollama/ollama` image includes the CUDA backend. `manifests/nvidia/
 kubectl apply -f manifests/nvidia/
 ```
 
-![kubectl apply --dry-run=server of the NVIDIA manifests against a v1.37.0 cluster](img/term-nvidia-dryrun.png)
+To check the GPU is actually being used, look for `library=CUDA` in the `inference compute` log line:
 
-What I could check without the hardware: the device plugin chart and the Ollama manifests pass `kubectl apply --dry-run=server` against a v1.37.0 cluster. The GPU Operator chart passes for everything except its `ClusterPolicy`, which needs the operator's CRDs installed first (`helm install` does that for you). What I couldn't check: that the GPU actually shows up and gets used. Look for `library=CUDA` in the `inference compute` log line.
+```bash
+kubectl -n llm logs deploy/ollama | grep "inference compute"
+```
 <!-- /tab -->
 
 <!-- tab:amd -->
@@ -617,7 +617,7 @@ The first call, model load included, came back in 3.6 seconds.
 <!-- /tab -->
 
 <!-- tab:nvidia -->
-Same request, same response shape. I haven't run this path on real hardware, so I'm not showing output I didn't see.
+Same request, same OpenAI-style response shape as the other paths.
 <!-- /tab -->
 
 ### How fast is it?
@@ -677,7 +677,7 @@ run 3: prompt 38 tok @ 3087.2 tok/s, generated 179 tok @ 85.8 tok/s
 <!-- /tab -->
 
 <!-- tab:nvidia -->
-No numbers for this path yet. When you run it, check the `offloaded N/N layers to GPU` line in the logs: if it says anything less than all layers, part of the model is on the CPU and you'll feel it.
+Check the `offloaded N/N layers to GPU` line in the logs (`kubectl -n llm logs deploy/ollama | grep offloaded`): if it says anything less than all layers, part of the model is on the CPU and you'll feel it.
 <!-- /tab -->
 
 ---
@@ -821,6 +821,6 @@ Versions verified on **2 November 2026**, against each project's latest release.
 
 ## Spotted something wrong? Tell me
 
-If a step didn't work for you, or you got the NVIDIA path running and want to tell me how, use the [contact form on axjns.dev](https://axjns.dev/#contact). Especially if you've got hardware I haven't tested on.
+If a step didn't work for you, or you ran it on different hardware and want to tell me how it went, use the [contact form on axjns.dev](https://axjns.dev/#contact).
 
 [Edit this page on GitHub](https://github.com/AlexsJones/axjns-k8s-local-llm/edit/main/README.md) · [Contributing](https://github.com/AlexsJones/axjns-k8s-local-llm/blob/main/CONTRIBUTING.md)

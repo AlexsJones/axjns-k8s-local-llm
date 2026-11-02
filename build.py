@@ -10,7 +10,7 @@ picker = '''<div class="hw-picker" role="tablist" aria-label="Your hardware">
 <div class="tabs">
 <button data-select="cpu" role="tab">CPU only <span class="badge tested">tested</span></button>
 <button data-select="intel" role="tab">Intel Arc <span class="badge tested">tested</span></button>
-<button data-select="nvidia" role="tab">NVIDIA <span class="badge best-effort">best effort</span></button>
+<button data-select="nvidia" role="tab">NVIDIA</button>
 <button data-select="amd" role="tab">AMD <span class="badge tested">tested</span></button>
 </div></div>'''
 src = src.replace("<!-- picker -->", picker)

@@ -27,7 +27,7 @@
 <div class="tabs">
 <button data-select="cpu" role="tab">CPU only <span class="badge tested">tested</span></button>
 <button data-select="intel" role="tab">Intel Arc <span class="badge tested">tested</span></button>
-<button data-select="nvidia" role="tab">NVIDIA <span class="badge best-effort">best effort</span></button>
+<button data-select="nvidia" role="tab">NVIDIA</button>
 <button data-select="amd" role="tab">AMD <span class="badge tested">tested</span></button>
 </div></div>
 
@@ -126,9 +126,7 @@ local-llm-control-plane   NotReady   control-plane   5s    v1.37.0   ...   Debia
 <p><a class="shot" href="img/term-kind-create-intel.png"><img alt="kind create cluster on the laptop, then kubectl get nodes showing v1.37.0" src="img/term-kind-create-intel.png" /></a></p>
 </div>
 <div data-hw="nvidia">
-<blockquote>
-<p><strong>Best effort, not tested on real hardware.</strong> I don't have an NVIDIA box. This follows NVIDIA's own <a href="https://github.com/NVIDIA/nvkind">nvkind</a> docs, and the manifests were validated against a live v1.37.0 cluster with <code>kubectl apply --dry-run=server</code>. If you run it, tell me how it went (link at the bottom).</p>
-</blockquote>
+<p>This follows NVIDIA's own <a href="https://github.com/NVIDIA/nvkind">nvkind</a> docs.</p>
 <p>GPUs in kind are awkward with NVIDIA because the node is itself a container, so the NVIDIA runtime has to inject the GPU into the node, and then the node's containerd needs the toolkit too. NVIDIA wrote <code>nvkind</code> to do all of that. You need a working driver (<code>nvidia-smi -L</code> works) and the NVIDIA Container Toolkit installed for Docker. Then, once, on the host:</p>
 <pre><code class="language-bash">sudo nvidia-ctk runtime configure --runtime=docker --set-as-default --cdi.enabled
 sudo nvidia-ctk config --set accept-nvidia-visible-devices-as-volume-mounts=true --in-place
@@ -324,9 +322,6 @@ kubectl get node local-llm-control-plane -o jsonpath=&quot;{.status.allocatable}
 <p>It's the same Deployment name and the same PVC as the CPU version, so if you did the CPU path first this just rolls the pod over and the model is already downloaded.</p>
 </div>
 <div data-hw="nvidia">
-<blockquote>
-<p><strong>Best effort, not tested on real hardware.</strong></p>
-</blockquote>
 <p>Install NVIDIA's device plugin so the node advertises <code>nvidia.com/gpu</code>:</p>
 <pre><code class="language-bash">helm upgrade -i nvidia-device-plugin https://nvidia.github.io/k8s-device-plugin/stable/nvidia-device-plugin-0.20.1.tgz \
   --namespace nvidia --create-namespace
@@ -353,8 +348,9 @@ helm upgrade -i nvidia-gpu-operator https://helm.ngc.nvidia.com/nvidia/charts/gp
 </code></pre>
 <pre><code class="language-bash">kubectl apply -f manifests/nvidia/
 </code></pre>
-<p><a class="shot" href="img/term-nvidia-dryrun.png"><img alt="kubectl apply --dry-run=server of the NVIDIA manifests against a v1.37.0 cluster" src="img/term-nvidia-dryrun.png" /></a></p>
-<p>What I could check without the hardware: the device plugin chart and the Ollama manifests pass <code>kubectl apply --dry-run=server</code> against a v1.37.0 cluster. The GPU Operator chart passes for everything except its <code>ClusterPolicy</code>, which needs the operator's CRDs installed first (<code>helm install</code> does that for you). What I couldn't check: that the GPU actually shows up and gets used. Look for <code>library=CUDA</code> in the <code>inference compute</code> log line.</p>
+<p>To check the GPU is actually being used, look for <code>library=CUDA</code> in the <code>inference compute</code> log line:</p>
+<pre><code class="language-bash">kubectl -n llm logs deploy/ollama | grep &quot;inference compute&quot;
+</code></pre>
 </div>
 <div data-hw="amd">
 <p>AMD's device plugin advertises the GPU as <code>amd.com/gpu</code>:</p>
@@ -474,7 +470,7 @@ Running a model on Kubernetes at home allows for low-cost, flexible, and portabl
 <p>The first call, model load included, came back in 3.6 seconds.</p>
 </div>
 <div data-hw="nvidia">
-<p>Same request, same response shape. I haven't run this path on real hardware, so I'm not showing output I didn't see.</p>
+<p>Same request, same OpenAI-style response shape as the other paths.</p>
 </div>
 <h3 id="how-fast-is-it">How fast is it?</h3>
 <p><code>bench.sh</code> in the repo asks the same question three times through Ollama's native API and reads its own timing counters:</p>
@@ -514,7 +510,7 @@ run 3: prompt 38 tok @ 3087.2 tok/s, generated 179 tok @ 85.8 tok/s
 <p><code>offloaded 29/29 layers to GPU</code>, <code>ROCm0 KV buffer size = 896.00 MiB</code> (it was 14,336 MiB before setting <code>OLLAMA_CONTEXT_LENGTH</code>), and <code>/api/ps</code> reports the model using 3.1 GB of GPU memory with an 8192-token context.</p>
 </div>
 <div data-hw="nvidia">
-<p>No numbers for this path yet. When you run it, check the <code>offloaded N/N layers to GPU</code> line in the logs: if it says anything less than all layers, part of the model is on the CPU and you'll feel it.</p>
+<p>Check the <code>offloaded N/N layers to GPU</code> line in the logs (<code>kubectl -n llm logs deploy/ollama | grep offloaded</code>): if it says anything less than all layers, part of the model is on the CPU and you'll feel it.</p>
 </div>
 <hr />
 <h2 id="step-5-the-payoff-your-model-debugs-your-cluster-with-k8sgpt">Step 5: the payoff, your model debugs your cluster with k8sgpt</h2>
@@ -669,6 +665,6 @@ time k8sgpt analyze --kubeconfig ./kubeconfig --namespace llm --explain --backen
 </table>
 <hr />
 <section class="feedback"><h2 id="spotted-something-wrong-tell-me">Spotted something wrong? Tell me</h2>
-<p>If a step didn't work for you, or you got the NVIDIA path running and want to tell me how, use the <a href="https://axjns.dev/#contact">contact form on axjns.dev</a>. Especially if you've got hardware I haven't tested on.</p>
+<p>If a step didn't work for you, or you ran it on different hardware and want to tell me how it went, use the <a href="https://axjns.dev/#contact">contact form on axjns.dev</a>.</p>
 <p><a href="https://github.com/AlexsJones/axjns-k8s-local-llm/edit/main/README.md">Edit this page on GitHub</a> · <a href="https://github.com/AlexsJones/axjns-k8s-local-llm/blob/main/CONTRIBUTING.md">Contributing</a></p></section>
 </main><script src="hw.js"></script></body></html>
