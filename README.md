@@ -854,6 +854,14 @@ That's a model server, a GPU exposed through a device plugin, a Service in front
 
 ---
 
+## Next steps
+
+Everything in this guide is one Ollama pod doing all the work. It loads the model, reads your prompt (prefill), then generates the answer one token at a time (decode), all on the same GPU or CPU. That's fine for one person on a laptop. The obvious next moves are swapping Ollama for [vLLM](https://docs.vllm.ai/) or the [llama.cpp server](https://github.com/ggml-org/llama.cpp/tree/master/tools/server), then running more than one replica behind the Service, with the Gateway API Inference Extension above doing the routing.
+
+After that comes disaggregated inference. Prefill and decode stress the hardware differently: prefill is compute-heavy, decode is mostly waiting on memory. So you split them onto separate workers or GPUs, hand the KV cache (the model's working memory for the prompt) from one to the other, and scale each side on its own. That's what [llm-d](https://llm-d.ai/), [vLLM's disaggregated prefill](https://docs.vllm.ai/en/latest/features/disagg_prefill.html), [NVIDIA Dynamo](https://github.com/ai-dynamo/dynamo) and [SGLang](https://docs.sglang.ai/advanced_features/pd_disaggregation.html) are working on. I haven't run any of that for this guide, and I may write it up sometime. If you want that, watch [the repo](https://github.com/AlexsJones/axjns-k8s-local-llm) or [open an issue](https://github.com/AlexsJones/axjns-k8s-local-llm/issues) and tell me.
+
+---
+
 ## Cleaning up
 
 ```bash

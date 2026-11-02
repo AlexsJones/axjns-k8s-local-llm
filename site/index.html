@@ -680,6 +680,10 @@ time k8sgpt analyze --kubeconfig ./kubeconfig --namespace llm --explain --backen
 <li><strong>Sympozium.</strong> For agents that use the model. <a href="https://github.com/sympozium-ai/sympozium">Sympozium</a> is another of my projects. It runs agents on Kubernetes, each in its own workload, with policy as CRDs, and you can point it at this Ollama endpoint. It's early, so expect things to change.</li>
 </ul>
 <hr />
+<h2 id="next-steps">Next steps</h2>
+<p>Everything in this guide is one Ollama pod doing all the work. It loads the model, reads your prompt (prefill), then generates the answer one token at a time (decode), all on the same GPU or CPU. That's fine for one person on a laptop. The obvious next moves are swapping Ollama for <a href="https://docs.vllm.ai/">vLLM</a> or the <a href="https://github.com/ggml-org/llama.cpp/tree/master/tools/server">llama.cpp server</a>, then running more than one replica behind the Service, with the Gateway API Inference Extension above doing the routing.</p>
+<p>After that comes disaggregated inference. Prefill and decode stress the hardware differently: prefill is compute-heavy, decode is mostly waiting on memory. So you split them onto separate workers or GPUs, hand the KV cache (the model's working memory for the prompt) from one to the other, and scale each side on its own. That's what <a href="https://llm-d.ai/">llm-d</a>, <a href="https://docs.vllm.ai/en/latest/features/disagg_prefill.html">vLLM's disaggregated prefill</a>, <a href="https://github.com/ai-dynamo/dynamo">NVIDIA Dynamo</a> and <a href="https://docs.sglang.ai/advanced_features/pd_disaggregation.html">SGLang</a> are working on. I haven't run any of that for this guide, and I may write it up sometime. If you want that, watch <a href="https://github.com/AlexsJones/axjns-k8s-local-llm">the repo</a> or <a href="https://github.com/AlexsJones/axjns-k8s-local-llm/issues">open an issue</a> and tell me.</p>
+<hr />
 <h2 id="cleaning-up">Cleaning up</h2>
 <pre><code class="language-bash">kind delete cluster --name local-llm --kubeconfig ./kubeconfig
 </code></pre>
