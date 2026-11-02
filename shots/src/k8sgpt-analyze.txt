@@ -1,48 +1,13 @@
 $ k8sgpt version
 k8sgpt: 0.4.41 (3644ecf), built at: unknown
 $ k8sgpt analyze --kubeconfig ./kubeconfig --namespace llm
-W1102 11:49:33.053408  608398 warnings.go:70] v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
 AI Provider: AI not used; --explain not set
 
 0: Deployment llm/ollama()
 - Error: Deployment llm/ollama has 1 replicas but 0 are available with status running
 
 1: Service llm/ollama()
-- Error: Service has not ready endpoints, pods: [Pod/ollama-685b446ccd-s7p2z], expected 1
+- Error: Service has not ready endpoints, pods: [Pod/ollama-7668db698b-ssmt8], expected 1
 
-2: Pod llm/ollama-685b446ccd-s7p2z(Deployment/ollama)
-- Error: Back-off pulling image "ollama/ollama:0.40.31": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/ollama/ollama:0.40.31": failed to resolve reference "docker.io/ollama/ollama:0.40.31": docker.io/ollama/ollama:0.40.31: not found
-
-
-
-$ k8sgpt analyze --kubeconfig ./kubeconfig --namespace llm --filter Pod --with-doc
-AI Provider: AI not used; --explain not set
-
-0: Pod llm/ollama-685b446ccd-s7p2z(Deployment/ollama)
-- Error: Back-off pulling image "ollama/ollama:0.40.31": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/ollama/ollama:0.40.31": failed to resolve reference "docker.io/ollama/ollama:0.40.31": docker.io/ollama/ollama:0.40.31: not found
-
-
-$ k8sgpt auth list
-Default: 
-> openai
-Active: 
-Unused: 
-> openai
-> anthropic
-> localai
-> ollama
-> azureopenai
-> cohere
-> amazonbedrock
-> amazonbedrockconverse
-> amazonsagemaker
-> google
-> noopai
-> huggingface
-> googlevertexai
-> oci
-> customrest
-> ibmwatsonxai
-> groq
-> bedrockmantle
-> litellm
+2: Pod llm/ollama-7668db698b-ssmt8(Deployment/ollama)
+- Error: Back-off pulling image "ollama/ollama:0.40.13-typo": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/ollama/ollama:0.40.13-typo": failed to resolve reference "docker.io/ollama/ollama:0.40.13-typo": docker.io/ollama/ollama:0.40.13-typo: not found

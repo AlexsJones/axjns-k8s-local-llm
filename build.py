@@ -26,7 +26,7 @@ page = f'''<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{title} · Alex Jones</title>
-<meta name="description" content="Run an LLM on Kubernetes on your own laptop or desktop: kind, llmfit, Ollama, GPUs (Intel, NVIDIA, AMD) and debugging with k8sgpt. Tested, with real output.">
+<meta name="description" content="Run an LLM on Kubernetes on your own laptop or desktop: kind, llmfit, Ollama, GPUs (Intel, NVIDIA, AMD) and debugging with k8sgpt, with real output.">
 <link rel="stylesheet" href="style.css">
 </head><body class="hw-cpu"><main>
 {body}
