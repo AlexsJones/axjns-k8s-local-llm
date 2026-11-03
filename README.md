@@ -38,14 +38,14 @@ And the accelerator and host setup each path needs:
 | AMD | a Radeon or Instinct GPU on [Ollama's ROCm list](https://docs.ollama.com/gpu) | `amdgpu` kernel driver, with `/dev/kfd` and `/dev/dri` present |
 
 - **CPU and RAM.** The pod needs 4 cores and 4 GiB free on its node to schedule, and can then grow to 8 GiB. kind's own pods already request just under a core (950m on the control plane, 100m on nvkind's worker), and a kind node's capacity is the whole machine's, so you need at least 5 cores on every path. On a 4-core machine, or a 4-vCPU cloud VM, the pod sits in `Pending` with `Insufficient cpu` (the fix is in step 3). As a rule of thumb, 8 cores and 16 GB of RAM leaves room for your OS, Docker and the kind control plane as well; extra cores mainly speed up the CPU path. Both machines I tested on had plenty: the Framework 13 has 16 cores and 62 GB, and the Framework desktop has 32 threads and 62 GB of system RAM, with another 64 GB set aside for the GPU.
-- **GPU memory.** Integrated GPUs and APUs (the Arc B390, the Radeon 8060S) use system memory, and Ollama sees the GPU's pool rather than the pod's 8 GiB limit: 46.7 GiB on the laptop, 64 GiB on the desktop. The pod's memory limit doesn't cap GPU memory on these chips. `llama3.2:3b` used 1.9 GB of weights plus its KV cache, 3.1 GB in total on both Intel and AMD with the 8192-token context the GPU manifests set. On a discrete card, 4 GB of VRAM should be enough for this model at that context (a rule of thumb, not something I measured on NVIDIA).
+- **GPU memory.** Integrated GPUs and APUs (the Arc B390, the Radeon 8060S) use system memory, and Ollama sees the GPU's pool rather than the pod's 8 GiB limit: 46.7 GiB on the laptop, 64 GiB on the desktop. The pod's memory limit doesn't cap GPU memory on these chips. `llama3.2:3b` used 1.9 GB of weights plus its KV cache, 3.1 GB in total on both Intel and AMD with the 8192-token context the GPU manifests set. On a discrete card it's the same 3.1 GB: on an NVIDIA T4, `nvidia-smi` showed 3,099 MiB in use, so a card with 4 GB of VRAM is enough for this model at that context.
 - **Disk.** Measured after my runs: the kind node image is 1.34 GB, the node's own image store grew to 5.8 GB with `ollama/ollama:0.40.13` (Intel laptop) and 4.1 GB with `ollama/ollama:0.40.13-rocm` (AMD desktop), and the model is 1.9 GB. Budget about 10 GB free. The downloads are 3.39 GB for `ollama/ollama:0.40.13` (the CPU, Intel and NVIDIA image; it bundles CUDA), 1.45 GB for the `-rocm` image, 0.39 GB for `kindest/node:v1.37.0` and 2.02 GB for the model.
 - **OS and container runtime.** Linux with Docker; I used Docker 29.7.2 on Fedora 43 and 44. kind also supports Podman. The GPU paths pass `/dev/dri` (and `/dev/kfd` for AMD) from the host into the node, so they need a Linux host.
 - **Bigger models.** All of the above is sized for a 3B model. For anything bigger, ask llmfit (step 1) what fits your pod's limits, then raise the memory limit and disk to match.
 
 > **Pick your hardware once** and every hardware-specific step on this page switches to match. On GitHub you'll just see all four versions one after another.
 
-**Tested on:** Framework 13 (Intel Core Ultra X7 358H, 16 cores, 62 GB RAM, Intel Arc B390), Fedora 44, kernel 7.1.13, Docker 29.7.2, kind v0.33.0, Kubernetes v1.37.0 (`kindest/node:v1.37.0`), Ollama 0.40.13, model `llama3.2:3b` (Q4_K_M). The AMD path was run on a Framework desktop (Ryzen AI Max+ 395, Radeon 8060S, gfx1151), Fedora 43, kernel 7.1.8, same kind, node image and Ollama versions. The NVIDIA path was tested on another PC. The CPU path was re-run from scratch on 3 November 2026 on an AWS EC2 m7i.2xlarge (8 vCPU, 32 GB), Ubuntu 24.04, kernel 7.0, Docker 29.9.2, and worked as written.
+**Tested on:** Framework 13 (Intel Core Ultra X7 358H, 16 cores, 62 GB RAM, Intel Arc B390), Fedora 44, kernel 7.1.13, Docker 29.7.2, kind v0.33.0, Kubernetes v1.37.0 (`kindest/node:v1.37.0`), Ollama 0.40.13, model `llama3.2:3b` (Q4_K_M). The AMD path was run on a Framework desktop (Ryzen AI Max+ 395, Radeon 8060S, gfx1151), Fedora 43, kernel 7.1.8, same kind, node image and Ollama versions. The NVIDIA path was tested on another PC, and re-run from scratch on 3 November 2026 on an AWS EC2 g4dn.xlarge (Tesla T4, 16 GB VRAM, 4 vCPU, 16 GB RAM) with the AWS Deep Learning Base OSS NVIDIA Driver AMI (Ubuntu 24.04, driver 595, NVIDIA Container Toolkit 1.20.1, Docker 29.9.2). That run needed the device plugin fix now in step 3, and the lower CPU request, because the VM has only 4 vCPUs. The CPU path was re-run from scratch on 3 November 2026 on an AWS EC2 m7i.2xlarge (8 vCPU, 32 GB), Ubuntu 24.04, kernel 7.0, Docker 29.9.2, and worked as written.
 
 **Versions verified on 2 November 2026.** See the [version table](#versions) at the end.
 
@@ -458,15 +458,23 @@ It's the same Deployment name and the same PVC as the CPU version, so if you did
 <!-- /tab -->
 
 <!-- tab:nvidia -->
-Install NVIDIA's device plugin so the node advertises `nvidia.com/gpu`:
+Install NVIDIA's device plugin so the node advertises `nvidia.com/gpu`. Two things the chart doesn't do for you on kind. First, it only schedules onto nodes labelled as having an NVIDIA GPU, and with no Node Feature Discovery in the cluster nothing sets that label, so you label the worker yourself. Second, the plugin pod needs the `nvidia` runtime class to see the driver, the same as the model pod:
 
 ```bash
+kubectl label node local-llm-worker nvidia.com/gpu.present=true
 helm upgrade -i nvidia-device-plugin https://nvidia.github.io/k8s-device-plugin/stable/nvidia-device-plugin-0.20.1.tgz \
-  --namespace nvidia --create-namespace
+  --namespace nvidia --create-namespace --set runtimeClassName=nvidia
+kubectl -n nvidia rollout status ds/nvidia-device-plugin
 kubectl get nodes -o custom-columns='NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu'   # expect 1 on local-llm-worker
 ```
 
-No `nvidia.com/gpu`? Check the plugin pods with `kubectl -n nvidia get pods`, then `kubectl -n nvidia logs` on the one running on the worker.
+```text
+NAME                      GPU
+local-llm-control-plane   <none>
+local-llm-worker          1
+```
+
+No `nvidia.com/gpu`? Check the plugin with `kubectl -n nvidia get ds,pods`. If the DaemonSet shows `DESIRED 0`, the worker is missing the `nvidia.com/gpu.present=true` label. If the pod is in `Error` and `kubectl -n nvidia logs` on it says `Failed to initialize NVML: ERROR_LIBRARY_NOT_FOUND`, the chart was installed without `--set runtimeClassName=nvidia`. Run the `helm upgrade` line above again with it.
 
 Pick one: the operator brings its own device plugin. If you want the full stack (device plugin, GPU feature discovery, DCGM metrics), install the GPU Operator v26.7.2 instead of the chart above, with the driver and toolkit turned off because the host already has them:
 
@@ -498,6 +506,12 @@ The standard `ollama/ollama` image includes the CUDA backend. `manifests/nvidia/
 
 ```bash
 kubectl apply -f manifests/nvidia/
+```
+
+On a 4-vCPU machine, such as a g4dn.xlarge or another small cloud GPU VM, the pod stays `Pending` with `Insufficient cpu` (see [what your machine needs](#what-your-machine-needs)). Lower the request to 2 cores; the GPU does the work, so it doesn't slow the model down:
+
+```bash
+kubectl -n llm set resources deploy/ollama -c ollama --requests=cpu=2
 ```
 
 To check the GPU is actually being used, look for `library=CUDA` in the `inference compute` log line:
@@ -603,6 +617,17 @@ time=2026-11-02T12:39:28.200Z level=INFO source=types.go:32 msg="inference compu
 `library=ROCm`, `compute=gfx1151`, `Radeon 8060S Graphics`. ROCm found the GPU from inside the pod with no `HSA_OVERRIDE_GFX_VERSION` hacks: the ROCm 7.2 runtime in the Ollama image supports gfx1151 directly.
 <!-- /tab -->
 
+<!-- tab:nvidia -->
+On the T4:
+
+```text
+$ kubectl -n llm logs deploy/ollama | grep "inference compute"
+time=2026-11-03T15:47:25.974Z level=INFO source=types.go:32 msg="inference compute" id=0 filter_id=0 library=CUDA compute=7.5 name=CUDA0 description="Tesla T4" libdirs=ollama,cuda_v13 driver=13.2 pci_id=0000:00:1e.0 type=discrete total="14.6 GiB" available="14.5 GiB"
+```
+
+`library=CUDA`, `compute=7.5`, `Tesla T4`. Ollama found the card from inside the pod, through the `nvidia` runtime class. `kubectl -n llm exec deploy/ollama -- nvidia-smi -L` lists it too.
+<!-- /tab -->
+
 ---
 
 ## Step 4: expose it and call it
@@ -676,7 +701,12 @@ The first call, model load included, came back in 3.6 seconds.
 <!-- /tab -->
 
 <!-- tab:nvidia -->
-Run the same request. You should get a `chat.completion` object back with the answer in `choices[0].message.content`. The first call includes loading the model onto the GPU, so it's the slow one.
+```text
+$ curl -s localhost:8081/v1/chat/completions ... | jq -r '.choices[0].message.content'
+Running a model on Kubernetes at home allows for greater control, scalability, and deployment flexibility, allowing for a more seamless and efficient development and testing experience for machine learning projects.
+```
+
+The first call includes loading the model onto the GPU, so it's the slow one. On the T4 it took 85 seconds; the second identical call came back in 0.4 seconds.
 <!-- /tab -->
 
 ### How fast is it?
@@ -733,7 +763,22 @@ run 3: prompt 38 tok @ 3087.2 tok/s, generated 179 tok @ 85.8 tok/s
 <!-- /tab -->
 
 <!-- tab:nvidia -->
-Check the `offloaded N/N layers to GPU` line in the logs (`kubectl -n llm logs deploy/ollama | grep offloaded`): if it says anything less than all layers, part of the model is on the CPU and you'll feel it.
+```text
+run 1: prompt 38 tok @ 1805.7 tok/s, generated 179 tok @ 89.1 tok/s
+run 2: prompt 38 tok @ 3435.2 tok/s, generated 179 tok @ 88.8 tok/s
+run 3: prompt 38 tok @ 3309.5 tok/s, generated 179 tok @ 89.1 tok/s
+```
+
+**About 89 tokens/sec** on a Tesla T4, with the pod requesting 2 cores. Check the offload lines:
+
+```text
+$ kubectl -n llm logs deploy/ollama | grep -E "offloaded|CUDA0 (model|KV)"
+load_tensors: offloaded 29/29 layers to GPU
+load_tensors:        CUDA0 model buffer size =  1918.35 MiB
+llama_kv_cache:      CUDA0 KV buffer size =   896.00 MiB
+```
+
+All 29 layers on the GPU. If it says anything less than all layers, part of the model is on the CPU and you'll feel it. `/api/ps` reports 3.1 GB, all of it in VRAM, and `nvidia-smi` on the host shows Ollama's `llama-server` using 3,096 MiB.
 <!-- /tab -->
 
 ---
@@ -835,7 +880,7 @@ If you've used k8sgpt before and already have an `ollama` backend, `auth add` sa
 
 ![k8sgpt explaining a missing secret using the model running in the cluster](img/term-16-k8sgpt-explain.png)
 
-No API key, and nothing left the machine. A 3B model's advice is generic, but it's right, and it took 26 seconds on CPU. In k9s the pod sits in `CreateContainerConfigError`:
+No API key, and nothing left the machine. A 3B model's advice is generic, but it's right, and it took 26 seconds on CPU. On the T4 it took 85 seconds, because the rollback had started a new pod and this was its first request, so it included loading the model onto the GPU. In k9s the pod sits in `CreateContainerConfigError`:
 
 ![k9s showing the model-downloader pod stuck in CreateContainerConfigError](img/k9s-missing-secret.png)
 
