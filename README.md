@@ -37,7 +37,7 @@ And the accelerator and host setup each path needs:
 | NVIDIA | a GPU with CUDA compute capability 5.0 or newer ([Ollama's GPU list](https://docs.ollama.com/gpu)) | NVIDIA driver 550 or newer, or 570 for compute capability 5.0 to 6.2 (`nvidia-smi` works), and the NVIDIA Container Toolkit configured for Docker |
 | AMD | a Radeon or Instinct GPU on [Ollama's ROCm list](https://docs.ollama.com/gpu) | `amdgpu` kernel driver, with `/dev/kfd` and `/dev/dri` present |
 
-- **CPU and RAM.** The node needs 4 free cores and 4 GiB to schedule the pod, which can then grow to 8 GiB. As a rule of thumb, 8 cores and 16 GB of RAM leaves room for your OS, Docker and the kind control plane as well; extra cores mainly speed up the CPU path. Both machines I tested on had plenty: the Framework 13 has 16 cores and 62 GB, and the Framework desktop has 32 threads and 62 GB of system RAM, with another 64 GB set aside for the GPU.
+- **CPU and RAM.** The pod needs 4 cores and 4 GiB free on its node to schedule, and can then grow to 8 GiB. kind's own pods already request just under a core (950m on the control plane, 100m on nvkind's worker), and a kind node's capacity is the whole machine's, so you need at least 5 cores on every path. On a 4-core machine, or a 4-vCPU cloud VM, the pod sits in `Pending` with `Insufficient cpu` (the fix is in step 3). As a rule of thumb, 8 cores and 16 GB of RAM leaves room for your OS, Docker and the kind control plane as well; extra cores mainly speed up the CPU path. Both machines I tested on had plenty: the Framework 13 has 16 cores and 62 GB, and the Framework desktop has 32 threads and 62 GB of system RAM, with another 64 GB set aside for the GPU.
 - **GPU memory.** Integrated GPUs and APUs (the Arc B390, the Radeon 8060S) use system memory, and Ollama sees the GPU's pool rather than the pod's 8 GiB limit: 46.7 GiB on the laptop, 64 GiB on the desktop. The pod's memory limit doesn't cap GPU memory on these chips. `llama3.2:3b` used 1.9 GB of weights plus its KV cache, 3.1 GB in total on both Intel and AMD with the 8192-token context the GPU manifests set. On a discrete card, 4 GB of VRAM should be enough for this model at that context (a rule of thumb, not something I measured on NVIDIA).
 - **Disk.** Measured after my runs: the kind node image is 1.34 GB, the node's own image store grew to 5.8 GB with `ollama/ollama:0.40.13` (Intel laptop) and 4.1 GB with `ollama/ollama:0.40.13-rocm` (AMD desktop), and the model is 1.9 GB. Budget about 10 GB free. The downloads are 3.39 GB for `ollama/ollama:0.40.13` (the CPU, Intel and NVIDIA image; it bundles CUDA), 1.45 GB for the `-rocm` image, 0.39 GB for `kindest/node:v1.37.0` and 2.02 GB for the model.
 - **OS and container runtime.** Linux with Docker; I used Docker 29.7.2 on Fedora 43 and 44. kind also supports Podman. The GPU paths pass `/dev/dri` (and `/dev/kfd` for AMD) from the host into the node, so they need a Linux host.
@@ -45,7 +45,7 @@ And the accelerator and host setup each path needs:
 
 > **Pick your hardware once** and every hardware-specific step on this page switches to match. On GitHub you'll just see all four versions one after another.
 
-**Tested on:** Framework 13 (Intel Core Ultra X7 358H, 16 cores, 62 GB RAM, Intel Arc B390), Fedora 44, kernel 7.1.13, Docker 29.7.2, kind v0.33.0, Kubernetes v1.37.0 (`kindest/node:v1.37.0`), Ollama 0.40.13, model `llama3.2:3b` (Q4_K_M). The AMD path was run on a Framework desktop (Ryzen AI Max+ 395, Radeon 8060S, gfx1151), Fedora 43, kernel 7.1.8, same kind, node image and Ollama versions. The NVIDIA path was tested on another PC.
+**Tested on:** Framework 13 (Intel Core Ultra X7 358H, 16 cores, 62 GB RAM, Intel Arc B390), Fedora 44, kernel 7.1.13, Docker 29.7.2, kind v0.33.0, Kubernetes v1.37.0 (`kindest/node:v1.37.0`), Ollama 0.40.13, model `llama3.2:3b` (Q4_K_M). The AMD path was run on a Framework desktop (Ryzen AI Max+ 395, Radeon 8060S, gfx1151), Fedora 43, kernel 7.1.8, same kind, node image and Ollama versions. The NVIDIA path was tested on another PC. The CPU path was re-run from scratch on 3 November 2026 on an AWS EC2 m7i.2xlarge (8 vCPU, 32 GB), Ubuntu 24.04, kernel 7.0, Docker 29.9.2, and worked as written.
 
 **Versions verified on 2 November 2026.** See the [version table](#versions) at the end.
 
@@ -62,7 +62,7 @@ Do one path, top to bottom.
 - **[llmfit](https://github.com/AlexsJones/llmfit) v1.1.18**, to pick a model that will actually fit your hardware. (Yes, I wrote it.)
 - **[k8sgpt](https://github.com/k8sgpt-ai/k8sgpt) v0.4.41**, for the last step, when your model debugs your cluster. (I created and maintain that one too.)
 - **k9s v0.51.0**, optional, but it's the nicest way to watch a cluster.
-- **jq**, to read the JSON that comes back (`sudo dnf install jq` or `sudo apt install jq`).
+- **jq**, to read the JSON that comes back (`sudo dnf install jq` or `sudo apt install jq`), and **python3**, which `bench.sh` uses (most distros already have it).
 - About **10 GB of free disk** and a decent connection (see [what your machine needs](#what-your-machine-needs) for the breakdown).
 
 I keep everything in one directory, binaries included, so nothing touches my main kubeconfig or system. Clone this guide's repo, because the cluster configs (`kind-local-llm*.yaml`), the manifests and `bench.sh` all live in it:
@@ -142,7 +142,7 @@ llmfit --ram 8G --cpu-cores 4 info meta-llama/Llama-3.2-3B-Instruct
 
 ![llmfit info for Llama 3.2 3B constrained to 8 GB and 4 cores: Perfect fit, memory requirements per quantisation](img/term-llmfit-info-intel.png)
 
-The lines that matter are at the bottom: at Q4_K_M it needs about 2 GB, it's a 🟢 Perfect fit in 8 GiB, and llmfit gives a baseline speed estimate you can check later against the real number. A 3B model is small, but it's good enough to hold a conversation and it runs on everything on this page, so that's what we'll use. Ollama calls it `llama3.2:3b`. `llmfit --ram 8G --cpu-cores 4 recommend --use-case chat` gives you a shortlist if you want something else.
+The lines that matter are at the bottom: at Q4_K_M it needs about 2 GB, it's a 🟢 Perfect fit in 8 GiB, and llmfit gives a baseline speed estimate you can check later against the real number. On a machine with no GPU, the same command rates it 🟡 Good rather than Perfect, because CPU inference is slow, and suggests Q8_0 because there's room for it. It still fits, and Ollama's `llama3.2:3b` is Q4_K_M either way. A 3B model is small, but it's good enough to hold a conversation and it runs on everything on this page, so that's what we'll use. Ollama calls it `llama3.2:3b`. `llmfit --ram 8G --cpu-cores 4 recommend --use-case chat` gives you a shortlist if you want something else.
 
 > **Going further:** [llmfit-dra](https://github.com/sympozium-ai/llmfit-dra) takes the same fit maths into the cluster as a Dynamic Resource Allocation driver. You ask for a model and a minimum tok/s, and the stock scheduler places the pod on a device that can actually deliver it. Overkill for one node.
 
@@ -552,7 +552,7 @@ kubectl -n llm get pods -w                            # Ctrl-C to stop watching
 kubectl -n llm logs deploy/ollama -c pull-model -f    # the model download, once the image is pulled
 ```
 
-`Init:0/1` is normal while the image and the model download. It's done when the pod shows `1/1 Running`. If it sits in `Pending` or `ImagePullBackOff`, run `kubectl -n llm describe pod -l app=ollama` and read the Events at the bottom. On a GPU path, `Pending` usually means the node isn't advertising the GPU yet.
+`Init:0/1` is normal while the image and the model download. It's done when the pod shows `1/1 Running`. If it sits in `Pending` or `ImagePullBackOff`, run `kubectl -n llm describe pod -l app=ollama` and read the Events at the bottom. On a GPU path, `Pending` usually means the node isn't advertising the GPU yet. If the event says `0/1 nodes are available: 1 Insufficient cpu`, the machine has fewer than 5 cores (see [what your machine needs](#what-your-machine-needs)). Lower the request and it schedules, just slower: `kubectl -n llm set resources deploy/ollama -c ollama --requests=cpu=2`.
 
 When it's done:
 
@@ -793,6 +793,8 @@ AI Provider: AI not used; --explain not set
 ```
 
 ![k8sgpt analyze listing the Deployment, Service and Pod findings](img/term-k8sgpt-analyze.png)
+
+On Kubernetes 1.37, k8sgpt 0.4.41 also prints a `warnings.go:70] v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice` line before its results. That's the API server warning about an old API k8sgpt still reads, and it's harmless.
 
 No AI involved yet: those are k8sgpt's built-in analyzers. Three findings, one cause: the pod can't pull, so the Deployment has nothing available, so the Service has no endpoints, so your curl fails. Roll back and check again:
 
